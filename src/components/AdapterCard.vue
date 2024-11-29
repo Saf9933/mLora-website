@@ -4,7 +4,7 @@
 
     <!-- Create Adapter -->
     <div class="section">
-      <h3>Create Adapter (POST /adapter)</h3>
+      <h3>Create Adapter </h3>
       <label class="label" for="adapterName">Adapter Name</label>
       <input
         type="text"
@@ -67,7 +67,7 @@
 
     <!-- Fetch Adapters -->
     <div class="section">
-      <h3>View Adapters (GET /adapter)</h3>
+      <h3>View Adapters </h3>
       <button @click="fetchAdapters" class="action-button">List Adapters</button>
       <ul v-if="adapters.length">
         <li v-for="(adapter, index) in adapters" :key="index">
@@ -78,7 +78,7 @@
 
     <!-- Delete Adapter -->
     <div class="section">
-      <h3>Delete Adapter (DELETE /adapter)</h3>
+      <h3>Delete an Adapter </h3>
       <label class="label" for="adapterToDelete">Adapter Name to Delete</label>
       <input
         type="text"
