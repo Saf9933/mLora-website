@@ -4,7 +4,7 @@
 
     <!-- Create Dataset -->
     <div class="section">
-      <h3>Create Dataset (POST /dataset)</h3>
+      <h3>Create Dataset </h3>
       <input
         type="text"
         v-model="datasetName"
@@ -38,7 +38,7 @@
 
     <!-- Fetch Datasets -->
     <div class="section">
-      <h3>View Datasets (GET /dataset)</h3>
+      <h3>View Datasets </h3>
       <button @click="fetchDatasets" class="action-button">Fetch Datasets</button>
       <ul v-if="datasets.length">
         <li v-for="(dataset, index) in datasets" :key="index">
@@ -49,7 +49,7 @@
 
     <!-- Delete Dataset -->
     <div class="section">
-      <h3>Delete Dataset (DELETE /dataset)</h3>
+      <h3>Delete Dataset </h3>
       <input
         type="text"
         v-model="datasetToDelete"
