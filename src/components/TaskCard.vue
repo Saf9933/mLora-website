@@ -4,7 +4,7 @@
 
     <!-- Create Task -->
     <div class="section">
-      <h3>Create Task </h3>
+      <h3>Create Task</h3>
       <label class="label" for="taskName">Task Name</label>
       <input
         type="text"
@@ -105,7 +105,11 @@
       <label class="label" for="reference">Reference</label>
       <select id="reference" v-model="reference" class="input-field">
         <option value="base">Base (Use the base LLM model)</option>
-        <option v-for="adapter in availableAdapters" :key="adapter" :value="adapter">
+        <option
+          v-for="adapter in availableAdapters"
+          :key="adapter"
+          :value="adapter"
+        >
           {{ adapter }}
         </option>
       </select>
@@ -114,18 +118,23 @@
 
     <!-- View Tasks -->
     <div class="section">
-      <h3>View Tasks (GET /task)</h3>
+      <h3>View Tasks</h3>
       <button @click="fetchTasks" class="action-button">List Tasks</button>
       <ul v-if="tasks.length">
         <li v-for="(task, index) in tasks" :key="index">
-          {{ task.name }} - {{ task.type }} - {{ task.dataset }} - {{ task.adapter }} - {{ task.state }}
+            <p><strong>Name:</strong> {{ task.name }}</p>
+            <p><strong>Type:</strong> {{ task.type }}</p>
+            <p><strong>Dataset:</strong> {{ task.dataset }}</p>
+            <p><strong>Adapter:</strong> {{ task.adapter }}</p>
+            <p><strong>State:</strong> {{ task.state }}</p>
         </li>
       </ul>
+      <p v-else>No tasks available.</p>
     </div>
 
     <!-- Delete Task -->
     <div class="section">
-      <h3>Delete Task </h3>
+      <h3>Delete Task</h3>
       <label class="label" for="taskToDelete">Task Name to Delete</label>
       <input
         type="text"
@@ -162,6 +171,7 @@ export default {
       taskToDelete: "",
       tasks: [],
       availableAdapters: [],
+      taskPollingInterval: null,
     };
   },
   methods: {
@@ -202,12 +212,19 @@ export default {
     async fetchTasks() {
       try {
         const response = await apiClient.get("/task");
-        this.tasks = response.data;
+        this.tasks = response.data.map((task) => ({
+          name: task.name,
+          type: task.type,
+          dataset: task.dataset,
+          adapter: task.adapter,
+          state: task.state,
+        }));
       } catch (error) {
         console.error("Error fetching tasks:", error);
         alert("Failed to fetch tasks.");
       }
     },
+
     async deleteTask() {
       if (!this.taskToDelete) {
         alert("Please provide the name of the task to delete.");
@@ -225,15 +242,27 @@ export default {
         alert("Failed to delete task.");
       }
     },
+    startTaskPolling() {
+      this.taskPollingInterval = setInterval(this.fetchTasks, 5000); // Poll every 5 seconds
+    },
+    stopTaskPolling() {
+      if (this.taskPollingInterval) {
+        clearInterval(this.taskPollingInterval);
+        this.taskPollingInterval = null;
+      }
+    },
   },
   async mounted() {
-    // Fetch available adapters for the reference dropdown
     try {
       const response = await apiClient.get("/adapter");
       this.availableAdapters = response.data.map((adapter) => adapter.name);
     } catch (error) {
       console.error("Error fetching adapters:", error);
     }
+    this.startTaskPolling();
+  },
+  beforeDestroy() {
+    this.stopTaskPolling();
   },
 };
 </script>

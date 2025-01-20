@@ -2,7 +2,6 @@
   <div class="management-card">
     <h2>Adapter Management</h2>
 
-    <!-- Create Adapter -->
     <div class="section">
       <h3>Create Adapter</h3>
       <label class="label" for="adapterName">Adapter Name</label>
@@ -62,23 +61,39 @@
         placeholder="0.05"
         class="input-field"
       />
+      <label class="label" for="targetModules">Target Modules</label>
+      <select
+        id="targetModules"
+        v-model="targetModules"
+        multiple
+        class="input-field"
+      >
+        <option value="q_proj">q_proj</option>
+        <option value="k_proj">k_proj</option>
+        <option value="v_proj">v_proj</option>
+        <option value="o_proj">o_proj</option>
+        <option value="gate_proj">gate_proj</option>
+        <option value="down_proj">down_proj</option>
+        <option value="up_proj">up_proj</option>
+      </select>
       <button @click="createAdapter" class="action-button">Create Adapter</button>
     </div>
 
-    <!-- Fetch Adapters -->
     <div class="section">
       <h3>View Adapters</h3>
       <button @click="fetchAdapters" class="action-button">List Adapters</button>
       <ul v-if="adapters.length">
         <li v-for="(adapter, index) in adapters" :key="index">
-          Name: {{ adapter.name }}, Type: {{ adapter.type }}, Optimizer: {{ adapter.optimizer }},
-          Learning Rate: {{ adapter.lr }}
+          <p><strong>Name:</strong> {{ adapter.name }}</p>
+          <p><strong>Type:</strong> {{ adapter.type }}</p>
+          <p><strong>Dir:</strong> {{ adapter.dir }}</p>
+          <p><strong>State:</strong> {{ adapter.state }}</p>
+          <p><strong>Task:</strong> {{ adapter.task }}</p>
         </li>
       </ul>
       <p v-else>No adapters available.</p>
     </div>
 
-    <!-- Delete Adapter -->
     <div class="section">
       <h3>Delete Adapter</h3>
       <label class="label" for="adapterToDelete">Adapter Name to Delete</label>
@@ -98,7 +113,6 @@
 import apiClient from "@/axios.js";
 
 export default {
-  name: "AdapterManagementCard",
   data() {
     return {
       adapterName: "",
@@ -109,12 +123,12 @@ export default {
       rank: 32,
       alpha: 64,
       dropout: 0.05,
+      targetModules: [],
       adapterToDelete: "",
-      adapters: [], // Array to hold fetched adapters
+      adapters: [],
     };
   },
   methods: {
-    // Create a new adapter
     async createAdapter() {
       const payload = {
         name: this.adapterName,
@@ -122,9 +136,13 @@ export default {
         optimizer: this.optimizer,
         lr: this.learningRate,
         "Need learning rate schedule": this.scheduler === "cosine" ? "yes" : "no",
-        rank: this.rank,
+        r: this.rank,
         alpha: this.alpha,
         dropout: this.dropout,
+        target_modules: this.targetModules.reduce((acc, module) => {
+          acc[module] = true;
+          return acc;
+        }, {}),
       };
 
       if (this.adapterType === "loraplus") {
@@ -145,27 +163,33 @@ export default {
 
       try {
         const response = await apiClient.post("/adapter", payload);
-        alert(response.data.message || "Adapter created successfully!");
-        this.fetchAdapters(); // Refresh the adapter list
+        if (response.status === 200 && response.data.success) {
+          alert(response.data.message || "Adapter created successfully!");
+          await this.fetchAdapters();
+        } else {
+          console.error("Backend did not confirm adapter creation:", response.data);
+          alert("Failed to create adapter. Check backend logs.");
+        }
       } catch (error) {
         console.error("Error creating adapter:", error);
         alert("Failed to create adapter.");
       }
     },
-
-    // Fetch adapters from the backend
     async fetchAdapters() {
       try {
         const response = await apiClient.get("/adapter");
-        console.log("Fetched adapters:", response.data); // Debugging
-        this.adapters = response.data; // Assign full response to adapters
+        this.adapters = response.data.map((adapter) => ({
+          name: adapter.name,
+          type: adapter.type,
+          dir: adapter.dir || "N/A",
+          state: adapter.state || "N/A",
+          task: adapter.task || "N/A",
+        }));
       } catch (error) {
         console.error("Error fetching adapters:", error);
         alert("Failed to fetch adapters.");
       }
     },
-
-    // Delete an adapter by name
     async deleteAdapter() {
       if (!this.adapterToDelete) {
         alert("Please provide the name of the adapter to delete.");
@@ -177,7 +201,7 @@ export default {
           data: { name: this.adapterToDelete },
         });
         alert(response.data.message || "Adapter deleted successfully!");
-        this.fetchAdapters(); // Refresh the adapter list
+        this.fetchAdapters();
       } catch (error) {
         console.error("Error deleting adapter:", error);
         alert("Failed to delete adapter.");
@@ -219,7 +243,6 @@ export default {
   border-radius: 5px;
   background: #2a2a54;
   color: #fff;
-  font-size: 1rem;
 }
 
 .action-button {
